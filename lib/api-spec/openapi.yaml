@@ -3,20 +3,29 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: FreshCart Online Grocery Store API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: categories
+    description: Product categories
+  - name: products
+    description: Grocery products
+  - name: cart
+    description: Shopping cart
+  - name: orders
+    description: Customer orders
+  - name: home
+    description: Home page aggregates
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,228 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /categories:
+    get:
+      operationId: listCategories
+      tags: [categories]
+      summary: List all product categories
+      responses:
+        "200":
+          description: List of categories with product counts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CategoryWithCount"
+
+  /products:
+    get:
+      operationId: listProducts
+      tags: [products]
+      summary: List products (filterable)
+      parameters:
+        - in: query
+          name: categorySlug
+          schema:
+            type: string
+        - in: query
+          name: search
+          schema:
+            type: string
+        - in: query
+          name: featured
+          schema:
+            type: boolean
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: List of products
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+
+  /products/{slug}:
+    get:
+      operationId: getProduct
+      tags: [products]
+      summary: Get a single product by slug
+      parameters:
+        - in: path
+          name: slug
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Product details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+
+  /home/showcase:
+    get:
+      operationId: getHomeShowcase
+      tags: [home]
+      summary: Home page showcase (categories, featured products, top deals)
+      responses:
+        "200":
+          description: Home showcase payload
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HomeShowcase"
+
+  /cart:
+    get:
+      operationId: getCart
+      tags: [cart]
+      summary: Get the current cart
+      responses:
+        "200":
+          description: Cart contents
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+    delete:
+      operationId: clearCart
+      tags: [cart]
+      summary: Clear the cart
+      responses:
+        "200":
+          description: Cleared cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /cart/items:
+    post:
+      operationId: addCartItem
+      tags: [cart]
+      summary: Add an item to the cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AddCartItemInput"
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /cart/items/{productId}:
+    patch:
+      operationId: updateCartItem
+      tags: [cart]
+      summary: Update quantity of an item
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateCartItemInput"
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+    delete:
+      operationId: removeCartItem
+      tags: [cart]
+      summary: Remove an item from the cart
+      parameters:
+        - in: path
+          name: productId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cart"
+
+  /orders:
+    get:
+      operationId: listOrders
+      tags: [orders]
+      summary: List orders for the current user
+      responses:
+        "200":
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Order"
+    post:
+      operationId: placeOrder
+      tags: [orders]
+      summary: Place an order from the current cart
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceOrderInput"
+      responses:
+        "200":
+          description: Created order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+
+  /orders/{id}:
+    get:
+      operationId: getOrder
+      tags: [orders]
+      summary: Get order detail
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Order with items
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Order"
+        "404":
+          description: Not found
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +262,260 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        accentColor:
+          type: string
+        sortOrder:
+          type: integer
+      required: [id, slug, name, description, imageUrl, accentColor, sortOrder]
+
+    CategoryWithCount:
+      allOf:
+        - $ref: "#/components/schemas/Category"
+        - type: object
+          properties:
+            productCount:
+              type: integer
+          required: [productCount]
+
+    Product:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+        unit:
+          type: string
+          description: e.g. "500g", "1L", "1 piece"
+        price:
+          type: number
+          description: Price in INR
+        mrp:
+          type: number
+          description: Maximum retail price (for showing discount), in INR
+        stock:
+          type: integer
+        featured:
+          type: boolean
+        rating:
+          type: number
+        ratingCount:
+          type: integer
+        category:
+          $ref: "#/components/schemas/Category"
+      required:
+        - id
+        - slug
+        - name
+        - description
+        - imageUrl
+        - unit
+        - price
+        - mrp
+        - stock
+        - featured
+        - rating
+        - ratingCount
+        - category
+
+    HomeShowcase:
+      type: object
+      properties:
+        categories:
+          type: array
+          items:
+            $ref: "#/components/schemas/CategoryWithCount"
+        featured:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        topDeals:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+        bestSellers:
+          type: array
+          items:
+            $ref: "#/components/schemas/Product"
+      required: [categories, featured, topDeals, bestSellers]
+
+    CartItem:
+      type: object
+      properties:
+        productId:
+          type: integer
+        quantity:
+          type: integer
+        product:
+          $ref: "#/components/schemas/Product"
+        lineTotal:
+          type: number
+      required: [productId, quantity, product, lineTotal]
+
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/CartItem"
+        subtotal:
+          type: number
+        deliveryFee:
+          type: number
+        total:
+          type: number
+        itemCount:
+          type: integer
+      required: [items, subtotal, deliveryFee, total, itemCount]
+
+    AddCartItemInput:
+      type: object
+      properties:
+        productId:
+          type: integer
+        quantity:
+          type: integer
+          minimum: 1
+      required: [productId, quantity]
+
+    UpdateCartItemInput:
+      type: object
+      properties:
+        quantity:
+          type: integer
+          minimum: 0
+      required: [quantity]
+
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        productId:
+          type: integer
+        productName:
+          type: string
+        productImageUrl:
+          type: string
+        unit:
+          type: string
+        unitPrice:
+          type: number
+        quantity:
+          type: integer
+        lineTotal:
+          type: number
+      required:
+        - id
+        - productId
+        - productName
+        - productImageUrl
+        - unit
+        - unitPrice
+        - quantity
+        - lineTotal
+
+    Order:
+      type: object
+      properties:
+        id:
+          type: integer
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        addressLine:
+          type: string
+        city:
+          type: string
+        pincode:
+          type: string
+        paymentMethod:
+          type: string
+          enum: [cod, upi, card]
+        notes:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [placed, packed, out_for_delivery, delivered]
+        subtotal:
+          type: number
+        deliveryFee:
+          type: number
+        total:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/OrderItem"
+      required:
+        - id
+        - customerName
+        - customerPhone
+        - addressLine
+        - city
+        - pincode
+        - paymentMethod
+        - status
+        - subtotal
+        - deliveryFee
+        - total
+        - createdAt
+        - items
+
+    PlaceOrderInput:
+      type: object
+      properties:
+        customerName:
+          type: string
+          minLength: 2
+        customerPhone:
+          type: string
+          minLength: 7
+        addressLine:
+          type: string
+          minLength: 5
+        city:
+          type: string
+          minLength: 2
+        pincode:
+          type: string
+          minLength: 4
+        paymentMethod:
+          type: string
+          enum: [cod, upi, card]
+        notes:
+          type: string
+      required:
+        - customerName
+        - customerPhone
+        - addressLine
+        - city
+        - pincode
+        - paymentMethod

@@ -1,0 +1,14 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "nnfUVN02VqrfaiwCjniAe"
+uri = "file://artifacts/grocery-store/public/hero-market.png"
+type = "image"
+title = "Indian grocery market hero banner"
+
+[[generated]]
+id = "xihsrOP5-qRwS28pFIhGP"
+uri = "file://artifacts/grocery-store/public/empty-cart.png"
+type = "image"
+title = "Empty cart illustration"
