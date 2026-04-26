@@ -1,5 +1,11 @@
-import { Switch, Route, Router as WouterRouter } from "wouter";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useQueryClient,
+} from "@tanstack/react-query";
+import { ClerkProvider, useClerk } from "@clerk/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -13,6 +19,19 @@ import Checkout from "@/pages/Checkout";
 import Orders from "@/pages/Orders";
 import OrderDetail from "@/pages/OrderDetail";
 import OrderConfirmation from "@/pages/OrderConfirmation";
+import SignInPage from "@/pages/SignIn";
+import SignUpPage from "@/pages/SignUp";
+import OnboardingPage from "@/pages/Onboarding";
+import SellerDashboardPage from "@/pages/SellerDashboard";
+import SellerProfilePage from "@/pages/SellerProfile";
+import { basePath, clerkAppearance, stripBase } from "@/lib/auth";
+
+const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
+
+if (!clerkPubKey) {
+  throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
+}
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,6 +41,28 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+function ClerkQueryClientCacheInvalidator() {
+  const { addListener } = useClerk();
+  const queryClient = useQueryClient();
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    const unsubscribe = addListener(({ user }) => {
+      const userId = user?.id ?? null;
+      if (
+        prevUserIdRef.current !== undefined &&
+        prevUserIdRef.current !== userId
+      ) {
+        queryClient.clear();
+      }
+      prevUserIdRef.current = userId;
+    });
+    return unsubscribe;
+  }, [addListener, queryClient]);
+
+  return null;
+}
 
 function Router() {
   return (
@@ -35,21 +76,58 @@ function Router() {
       <Route path="/orders" component={Orders} />
       <Route path="/order/:id" component={OrderDetail} />
       <Route path="/order-confirmation/:id" component={OrderConfirmation} />
+      <Route path="/sign-in/*?" component={SignInPage} />
+      <Route path="/sign-up/*?" component={SignUpPage} />
+      <Route path="/onboarding" component={OnboardingPage} />
+      <Route path="/seller" component={SellerDashboardPage} />
+      <Route path="/seller/profile" component={SellerProfilePage} />
       <Route component={NotFound} />
     </Switch>
   );
 }
 
+function ClerkProviderWithRoutes() {
+  const [, setLocation] = useLocation();
+  return (
+    <ClerkProvider
+      publishableKey={clerkPubKey}
+      proxyUrl={clerkProxyUrl}
+      appearance={clerkAppearance}
+      signInUrl={`${basePath}/sign-in`}
+      signUpUrl={`${basePath}/sign-up`}
+      localization={{
+        signIn: {
+          start: {
+            title: "Welcome back to FreshCart",
+            subtitle: "Sign in to shop or manage your shop",
+          },
+        },
+        signUp: {
+          start: {
+            title: "Join FreshCart",
+            subtitle: "Create an account to buy or sell fresh groceries",
+          },
+        },
+      }}
+      routerPush={(to) => setLocation(stripBase(to))}
+      routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
+    >
+      <QueryClientProvider client={queryClient}>
+        <ClerkQueryClientCacheInvalidator />
+        <TooltipProvider>
+          <Router />
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProvider>
+    </ClerkProvider>
+  );
+}
+
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-          <Router />
-        </WouterRouter>
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProvider>
+    <WouterRouter base={basePath}>
+      <ClerkProviderWithRoutes />
+    </WouterRouter>
   );
 }
 

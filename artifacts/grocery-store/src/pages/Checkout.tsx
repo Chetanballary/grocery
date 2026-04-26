@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useGetCart, usePlaceOrder, getListOrdersQueryKey, getGetCartQueryKey } from "@workspace/api-client-react";
-import { PlaceOrderInputPaymentMethod } from "@workspace/api-client-react/src/generated/api.schemas";
+import { PlaceOrderInputPaymentMethod } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import CartLineItem from "@/components/CartLineItem";

@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useGetProduct, useGetCart, useAddCartItem, useUpdateCartItem, getGetCartQueryKey } from "@workspace/api-client-react";
+import { useGetProduct, useGetCart, useAddCartItem, useUpdateCartItem, getGetCartQueryKey, getGetProductQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import NotFound from "./not-found";
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
-  const { data: product, isLoading, error } = useGetProduct(slug || "", { query: { enabled: !!slug } });
+  const { data: product, isLoading, error } = useGetProduct(slug || "", { query: { enabled: !!slug, queryKey: getGetProductQueryKey(slug || "") } });
   
   const { data: cart } = useGetCart();
   const queryClient = useQueryClient();

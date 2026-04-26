@@ -8,6 +8,184 @@
 import * as zod from "zod";
 
 /**
+ * @summary Get the current user's profile (creates a default 'buyer' record on first call)
+ */
+export const GetMeResponse = zod.object({
+  id: zod.number(),
+  clerkUserId: zod.string(),
+  role: zod.enum(["buyer", "seller"]),
+  displayName: zod.string(),
+  sellerName: zod.string(),
+  phone: zod.string(),
+});
+
+/**
+ * @summary Update the current user's profile (role, displayName, sellerName, phone)
+ */
+export const UpdateMeBody = zod.object({
+  role: zod.enum(["buyer", "seller"]).optional(),
+  displayName: zod.string().optional(),
+  sellerName: zod.string().optional(),
+  phone: zod.string().optional(),
+});
+
+export const UpdateMeResponse = zod.object({
+  id: zod.number(),
+  clerkUserId: zod.string(),
+  role: zod.enum(["buyer", "seller"]),
+  displayName: zod.string(),
+  sellerName: zod.string(),
+  phone: zod.string(),
+});
+
+/**
+ * @summary List the current seller's own products
+ */
+export const ListSellerProductsResponseItem = zod.object({
+  id: zod.number(),
+  slug: zod.string(),
+  name: zod.string(),
+  description: zod.string(),
+  imageUrl: zod.string(),
+  unit: zod.string().describe('e.g. \"500g\", \"1L\", \"1 piece\"'),
+  price: zod.number().describe("Price in INR"),
+  mrp: zod
+    .number()
+    .describe("Maximum retail price (for showing discount), in INR"),
+  stock: zod.number(),
+  featured: zod.boolean(),
+  rating: zod.number(),
+  ratingCount: zod.number(),
+  category: zod.object({
+    id: zod.number(),
+    slug: zod.string(),
+    name: zod.string(),
+    description: zod.string(),
+    imageUrl: zod.string(),
+    accentColor: zod.string(),
+    sortOrder: zod.number(),
+  }),
+});
+export const ListSellerProductsResponse = zod.array(
+  ListSellerProductsResponseItem,
+);
+
+/**
+ * @summary Create a new product as a seller
+ */
+export const createSellerProductBodyNameMin = 2;
+
+export const createSellerProductBodyDescriptionMin = 2;
+
+export const createSellerProductBodyPriceMin = 0;
+
+export const createSellerProductBodyMrpMin = 0;
+
+export const createSellerProductBodyStockMin = 0;
+
+export const CreateSellerProductBody = zod.object({
+  name: zod.string().min(createSellerProductBodyNameMin),
+  description: zod.string().min(createSellerProductBodyDescriptionMin),
+  imageUrl: zod.string(),
+  unit: zod.string().min(1),
+  price: zod.number().min(createSellerProductBodyPriceMin),
+  mrp: zod.number().min(createSellerProductBodyMrpMin),
+  stock: zod.number().min(createSellerProductBodyStockMin),
+  categoryId: zod.number(),
+});
+
+export const CreateSellerProductResponse = zod.object({
+  id: zod.number(),
+  slug: zod.string(),
+  name: zod.string(),
+  description: zod.string(),
+  imageUrl: zod.string(),
+  unit: zod.string().describe('e.g. \"500g\", \"1L\", \"1 piece\"'),
+  price: zod.number().describe("Price in INR"),
+  mrp: zod
+    .number()
+    .describe("Maximum retail price (for showing discount), in INR"),
+  stock: zod.number(),
+  featured: zod.boolean(),
+  rating: zod.number(),
+  ratingCount: zod.number(),
+  category: zod.object({
+    id: zod.number(),
+    slug: zod.string(),
+    name: zod.string(),
+    description: zod.string(),
+    imageUrl: zod.string(),
+    accentColor: zod.string(),
+    sortOrder: zod.number(),
+  }),
+});
+
+/**
+ * @summary Update one of the seller's own products
+ */
+export const UpdateSellerProductParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const updateSellerProductBodyNameMin = 2;
+
+export const updateSellerProductBodyDescriptionMin = 2;
+
+export const updateSellerProductBodyPriceMin = 0;
+
+export const updateSellerProductBodyMrpMin = 0;
+
+export const updateSellerProductBodyStockMin = 0;
+
+export const UpdateSellerProductBody = zod.object({
+  name: zod.string().min(updateSellerProductBodyNameMin),
+  description: zod.string().min(updateSellerProductBodyDescriptionMin),
+  imageUrl: zod.string(),
+  unit: zod.string().min(1),
+  price: zod.number().min(updateSellerProductBodyPriceMin),
+  mrp: zod.number().min(updateSellerProductBodyMrpMin),
+  stock: zod.number().min(updateSellerProductBodyStockMin),
+  categoryId: zod.number(),
+});
+
+export const UpdateSellerProductResponse = zod.object({
+  id: zod.number(),
+  slug: zod.string(),
+  name: zod.string(),
+  description: zod.string(),
+  imageUrl: zod.string(),
+  unit: zod.string().describe('e.g. \"500g\", \"1L\", \"1 piece\"'),
+  price: zod.number().describe("Price in INR"),
+  mrp: zod
+    .number()
+    .describe("Maximum retail price (for showing discount), in INR"),
+  stock: zod.number(),
+  featured: zod.boolean(),
+  rating: zod.number(),
+  ratingCount: zod.number(),
+  category: zod.object({
+    id: zod.number(),
+    slug: zod.string(),
+    name: zod.string(),
+    description: zod.string(),
+    imageUrl: zod.string(),
+    accentColor: zod.string(),
+    sortOrder: zod.number(),
+  }),
+});
+
+/**
+ * @summary Delete one of the seller's own products
+ */
+export const DeleteSellerProductParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteSellerProductResponse = zod.object({
+  success: zod.boolean(),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

@@ -24,6 +24,7 @@ export const productsTable = pgTable("products", {
   categoryId: integer("category_id")
     .notNull()
     .references(() => categoriesTable.id, { onDelete: "cascade" }),
+  sellerId: integer("seller_id"),
 });
 
 export type Product = typeof productsTable.$inferSelect;

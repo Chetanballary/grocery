@@ -121,6 +121,55 @@ export interface Order {
   items: OrderItem[];
 }
 
+export type UserProfileRole =
+  (typeof UserProfileRole)[keyof typeof UserProfileRole];
+
+export const UserProfileRole = {
+  buyer: "buyer",
+  seller: "seller",
+} as const;
+
+export interface UserProfile {
+  id: number;
+  clerkUserId: string;
+  role: UserProfileRole;
+  displayName: string;
+  sellerName: string;
+  phone: string;
+}
+
+export type UpdateUserInputRole =
+  (typeof UpdateUserInputRole)[keyof typeof UpdateUserInputRole];
+
+export const UpdateUserInputRole = {
+  buyer: "buyer",
+  seller: "seller",
+} as const;
+
+export interface UpdateUserInput {
+  role?: UpdateUserInputRole;
+  displayName?: string;
+  sellerName?: string;
+  phone?: string;
+}
+
+export interface SellerProductInput {
+  /** @minLength 2 */
+  name: string;
+  /** @minLength 2 */
+  description: string;
+  imageUrl: string;
+  /** @minLength 1 */
+  unit: string;
+  /** @minimum 0 */
+  price: number;
+  /** @minimum 0 */
+  mrp: number;
+  /** @minimum 0 */
+  stock: number;
+  categoryId: number;
+}
+
 export type PlaceOrderInputPaymentMethod =
   (typeof PlaceOrderInputPaymentMethod)[keyof typeof PlaceOrderInputPaymentMethod];
 
@@ -144,6 +193,10 @@ export interface PlaceOrderInput {
   paymentMethod: PlaceOrderInputPaymentMethod;
   notes?: string;
 }
+
+export type DeleteSellerProduct200 = {
+  success: boolean;
+};
 
 export type ListProductsParams = {
   categorySlug?: string;

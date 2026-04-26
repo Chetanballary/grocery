@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAddCartItem, useUpdateCartItem, useGetCart, getGetCartQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Product } from "@workspace/api-client-react/src/generated/api.schemas";
+import { Product } from "@workspace/api-client-react";
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";

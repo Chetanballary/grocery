@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { CategoryWithCount } from "@workspace/api-client-react/src/generated/api.schemas";
+import { CategoryWithCount } from "@workspace/api-client-react";
 import { Card, CardContent } from "./ui/card";
 
 interface CategoryCardProps {

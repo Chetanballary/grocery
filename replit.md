@@ -26,9 +26,19 @@ FreshCart is a full-stack online grocery store with categories for fruits, veget
 ## Domain Model (Drizzle schema in `lib/db/src/schema/`)
 
 - `categories` — top-level grocery categories with image and accent color
-- `products` — products with price, MRP (for showing discount), unit, stock, rating
+- `products` — products with price, MRP (for showing discount), unit, stock, rating; nullable `sellerId` (null = curated/store, non-null = listed by a seller)
 - `cart_items` — session-scoped shopping cart line items
 - `orders` + `order_items` — placed orders with delivery and payment info
+- `users` — Clerk-backed profiles (`clerkUserId`, `role` = `buyer`|`seller`, `displayName`, `sellerName`, `phone`)
+
+## Authentication (Clerk, dual-role)
+
+- Replit-managed Clerk via `setupClerkWhitelabelAuth()`; secrets `CLERK_SECRET_KEY`, `CLERK_PUBLISHABLE_KEY`, `VITE_CLERK_PUBLISHABLE_KEY` auto-set.
+- Clerk SDKs: `@clerk/express` on api, `@clerk/react` + `@clerk/themes` on storefront. Clerk JWKS proxied via `clerkProxyMiddleware`.
+- Backend helpers in `artifacts/api-server/src/lib/auth.ts`: `requireAuth`, `requireSeller`, `getOrCreateUser` (auto-creates buyer profile on first sign-in).
+- Cart/orders remain session-cookie based and work without login. Buyer sign-in is optional; seller routes require role=seller.
+- Routes: `/api/me` (GET/PATCH profile), `/api/seller/products` (GET/POST/PATCH/DELETE — seller-only).
+- Frontend pages: `/sign-in`, `/sign-up`, `/onboarding` (role picker, honors `intendedRole` set by "Sell on FreshCart" CTA), `/seller` (dashboard CRUD), `/seller/profile`.
 
 ## Key Commands
 

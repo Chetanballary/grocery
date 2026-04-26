@@ -20,7 +20,135 @@ tags:
     description: Customer orders
   - name: home
     description: Home page aggregates
+  - name: users
+    description: Authenticated user profile
+  - name: seller
+    description: Seller product management
 paths:
+  /me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get the current user's profile (creates a default 'buyer' record on first call)
+      responses:
+        "200":
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update the current user's profile (role, displayName, sellerName, phone)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserInput"
+      responses:
+        "200":
+          description: Updated profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserProfile"
+        "401":
+          description: Not authenticated
+
+  /seller/products:
+    get:
+      operationId: listSellerProducts
+      tags: [seller]
+      summary: List the current seller's own products
+      responses:
+        "200":
+          description: List of products owned by the seller
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Product"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a seller
+    post:
+      operationId: createSellerProduct
+      tags: [seller]
+      summary: Create a new product as a seller
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SellerProductInput"
+      responses:
+        "200":
+          description: Created product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "401":
+          description: Not authenticated
+        "403":
+          description: Not a seller
+
+  /seller/products/{id}:
+    patch:
+      operationId: updateSellerProduct
+      tags: [seller]
+      summary: Update one of the seller's own products
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SellerProductInput"
+      responses:
+        "200":
+          description: Updated product
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Product"
+        "404":
+          description: Not found
+    delete:
+      operationId: deleteSellerProduct
+      tags: [seller]
+      summary: Delete one of the seller's own products
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Deletion result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required: [success]
+        "404":
+          description: Not found
+
   /healthz:
     get:
       operationId: healthCheck
@@ -488,6 +616,72 @@ components:
         - total
         - createdAt
         - items
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        clerkUserId:
+          type: string
+        role:
+          type: string
+          enum: [buyer, seller]
+        displayName:
+          type: string
+        sellerName:
+          type: string
+        phone:
+          type: string
+      required: [id, clerkUserId, role, displayName, sellerName, phone]
+
+    UpdateUserInput:
+      type: object
+      properties:
+        role:
+          type: string
+          enum: [buyer, seller]
+        displayName:
+          type: string
+        sellerName:
+          type: string
+        phone:
+          type: string
+
+    SellerProductInput:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+        description:
+          type: string
+          minLength: 2
+        imageUrl:
+          type: string
+        unit:
+          type: string
+          minLength: 1
+        price:
+          type: number
+          minimum: 0
+        mrp:
+          type: number
+          minimum: 0
+        stock:
+          type: integer
+          minimum: 0
+        categoryId:
+          type: integer
+      required:
+        - name
+        - description
+        - imageUrl
+        - unit
+        - price
+        - mrp
+        - stock
+        - categoryId
 
     PlaceOrderInput:
       type: object

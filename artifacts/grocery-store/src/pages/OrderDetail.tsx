@@ -1,5 +1,5 @@
 import { useParams } from "wouter";
-import { useGetOrder } from "@workspace/api-client-react";
+import { useGetOrder, getGetOrderQueryKey } from "@workspace/api-client-react";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: order, isLoading } = useGetOrder(Number(id), { query: { enabled: !!id } });
+  const { data: order, isLoading } = useGetOrder(Number(id), { query: { enabled: !!id, queryKey: getGetOrderQueryKey(Number(id)) } });
 
   if (isLoading) {
     return (

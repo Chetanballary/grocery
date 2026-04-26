@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { useUpdateCartItem, useRemoveCartItem, getGetCartQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { CartItem } from "@workspace/api-client-react/src/generated/api.schemas";
+import { CartItem } from "@workspace/api-client-react";
 import { Button } from "./ui/button";
 import { Plus, Minus, Trash2, Loader2 } from "lucide-react";
 import { useState } from "react";

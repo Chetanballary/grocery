@@ -1,5 +1,5 @@
 import { useParams, Link } from "wouter";
-import { useGetOrder } from "@workspace/api-client-react";
+import { useGetOrder, getGetOrderQueryKey } from "@workspace/api-client-react";
 import Layout from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { format } from "date-fns";
 
 export default function OrderConfirmation() {
   const { id } = useParams<{ id: string }>();
-  const { data: order, isLoading } = useGetOrder(Number(id), { query: { enabled: !!id } });
+  const { data: order, isLoading } = useGetOrder(Number(id), { query: { enabled: !!id, queryKey: getGetOrderQueryKey(Number(id)) } });
 
   if (isLoading) {
     return (
