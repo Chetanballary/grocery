@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { Show, useUser } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import {
   useGetMe,
@@ -14,15 +14,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { getMockUserId } from "@/lib/auth";
 
 export default function SellerProfilePage() {
   const [, setLocation] = useLocation();
-  const { isLoaded, isSignedIn } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const mockUserId = getMockUserId();
+  const clerkUserId = isLoaded && isSignedIn ? userId : null;
+  const isAuthenticated = !!clerkUserId || !!mockUserId;
   const { data: me, isLoading } = useGetMe({
     query: {
-      enabled: isLoaded && isSignedIn === true,
+      enabled: isAuthenticated,
       queryKey: getGetMeQueryKey(),
     },
   });
@@ -42,8 +46,8 @@ export default function SellerProfilePage() {
   }, [me, hydrated]);
 
   useEffect(() => {
-    if (isLoaded && !isSignedIn) setLocation("/sign-in");
-  }, [isLoaded, isSignedIn, setLocation]);
+    if (!isAuthenticated) setLocation("/sign-in");
+  }, [isAuthenticated, setLocation]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,8 +78,7 @@ export default function SellerProfilePage() {
   }
 
   return (
-    <Show when="signed-in">
-      <Layout>
+    <Layout>
         <div className="container max-w-3xl mx-auto px-4 md:px-6 py-10">
           <Link href="/seller">
             <Button variant="ghost" size="sm" className="mb-4">
@@ -134,6 +137,5 @@ export default function SellerProfilePage() {
           </Card>
         </div>
       </Layout>
-    </Show>
   );
 }

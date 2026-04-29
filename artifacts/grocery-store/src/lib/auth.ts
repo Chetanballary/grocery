@@ -8,26 +8,6 @@ export function stripBase(path: string): string {
     : path;
 }
 
-export const ROLE_INTENT_KEY = "freshcart:intended-role";
-
-export function setIntendedRole(role: "buyer" | "seller") {
-  try {
-    sessionStorage.setItem(ROLE_INTENT_KEY, role);
-  } catch {
-    // ignore
-  }
-}
-
-export function consumeIntendedRole(): "buyer" | "seller" | null {
-  try {
-    const v = sessionStorage.getItem(ROLE_INTENT_KEY);
-    sessionStorage.removeItem(ROLE_INTENT_KEY);
-    return v === "buyer" || v === "seller" ? v : null;
-  } catch {
-    return null;
-  }
-}
-
 export const clerkAppearance = {
   theme: shadcn,
   cssLayerName: "clerk",
@@ -83,3 +63,38 @@ export const clerkAppearance = {
     main: "",
   },
 };
+
+export function getMockUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("mock_user_id");
+}
+
+export function setMockUserId(): string {
+  const userId = "user_guest_" + Math.random().toString(36).slice(2, 9);
+  localStorage.setItem("mock_user_id", userId);
+  return userId;
+}
+
+export function clearMockUserId() {
+  localStorage.removeItem("mock_user_id");
+}
+
+export const ROLE_INTENT_KEY = "aaharaam:intended-role";
+
+export function setIntendedRole(role: "buyer" | "seller") {
+  try {
+    sessionStorage.setItem(ROLE_INTENT_KEY, role);
+  } catch {
+    // ignore
+  }
+}
+
+export function consumeIntendedRole(): "buyer" | "seller" | null {
+  try {
+    const v = sessionStorage.getItem(ROLE_INTENT_KEY);
+    sessionStorage.removeItem(ROLE_INTENT_KEY);
+    return v === "buyer" || v === "seller" ? v : null;
+  } catch {
+    return null;
+  }
+}

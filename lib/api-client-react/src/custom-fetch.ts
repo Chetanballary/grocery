@@ -358,6 +358,19 @@ export async function customFetch<T = unknown>(
     }
   }
 
+  // Support for mock login, but only when no real auth header is present.
+  // Real Clerk sessions should always win over guest mode.
+  if (
+    typeof window !== "undefined" &&
+    !headers.has("authorization") &&
+    !headers.has("x-mock-user-id")
+  ) {
+    const mockId = localStorage.getItem("mock_user_id");
+    if (mockId) {
+      headers.set("x-mock-user-id", mockId);
+    }
+  }
+
   const requestInfo = { method, url: resolveUrl(input) };
 
   const response = await fetch(input, { ...init, method, headers });

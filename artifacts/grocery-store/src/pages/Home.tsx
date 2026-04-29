@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { ArrowRight, Sparkles, TrendingUp, Tags } from "lucide-react";
 
-import heroMarketImg from "../../public/hero-market.png";
+const heroMarketImg = "/hero-market.png";
 
 export default function Home() {
   const { data: showcase, isLoading } = useGetHomeShowcase();

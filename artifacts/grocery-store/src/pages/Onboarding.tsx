@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
-import { Show, useUser } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
 import { ShoppingBasket, Sprout, Loader2 } from "lucide-react";
 import {
   useGetMe,
@@ -10,15 +10,19 @@ import {
 } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { consumeIntendedRole } from "@/lib/auth";
+import { consumeIntendedRole, getMockUserId } from "@/lib/auth";
 
 export default function OnboardingPage() {
   const [, setLocation] = useLocation();
-  const { isLoaded, isSignedIn } = useUser();
   const queryClient = useQueryClient();
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const mockUserId = getMockUserId();
+  const clerkUserId = isLoaded && isSignedIn ? userId : null;
+  const isAuthenticated = !!clerkUserId || !!mockUserId;
+  
   const { data: profile, isLoading: profileLoading } = useGetMe({
     query: {
-      enabled: isLoaded && isSignedIn === true,
+      enabled: isAuthenticated,
       queryKey: getGetMeQueryKey(),
     },
   });
@@ -27,12 +31,11 @@ export default function OnboardingPage() {
   const [intentApplied, setIntentApplied] = useState(false);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
+    if (!isAuthenticated) {
       setLocation("/sign-in");
       return;
     }
-  }, [isLoaded, isSignedIn, setLocation]);
+  }, [isAuthenticated, setLocation]);
 
   useEffect(() => {
     if (!profile || intentApplied) return;
@@ -64,8 +67,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <Show when="signed-in">
-      <div className="min-h-[100dvh] bg-gradient-to-br from-green-50 via-stone-50 to-amber-50 px-4 py-16 flex items-center justify-center">
+    <div className="min-h-[100dvh] bg-gradient-to-br from-green-50 via-stone-50 to-amber-50 px-4 py-16 flex items-center justify-center">
         <div className="w-full max-w-3xl">
           {profileLoading || busy || isPending ? (
             <div className="flex flex-col items-center gap-3 text-stone-600">
@@ -76,10 +78,10 @@ export default function OnboardingPage() {
             <>
               <div className="text-center mb-10">
                 <h1 className="font-display text-4xl md:text-5xl font-bold text-stone-900 mb-3">
-                  Welcome to FreshCart
+                  Welcome to Aaharaam
                 </h1>
                 <p className="text-stone-600 text-lg">
-                  How would you like to use FreshCart today?
+                  How would you like to use Aaharaam today?
                 </p>
               </div>
               <div className="grid md:grid-cols-2 gap-6">
@@ -117,7 +119,7 @@ export default function OnboardingPage() {
                       I'm a Farmer / Trader
                     </h2>
                     <p className="text-stone-600 mb-6">
-                      List your produce or goods on FreshCart and sell directly
+                      List your produce or goods on Aaharaam and sell directly
                       to customers in your area.
                     </p>
                     <Button
@@ -131,8 +133,7 @@ export default function OnboardingPage() {
               </div>
             </>
           )}
-        </div>
       </div>
-    </Show>
+    </div>
   );
 }

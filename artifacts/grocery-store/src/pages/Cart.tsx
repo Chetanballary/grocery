@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "wouter";
 import { ShoppingBag, ArrowRight } from "lucide-react";
 
-import emptyCartImg from "../../public/empty-cart.png";
+const emptyCartImg = "/empty-cart.png";
 
 export default function Cart() {
   const { data: cart, isLoading } = useGetCart();

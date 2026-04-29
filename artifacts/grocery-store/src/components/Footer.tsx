@@ -12,7 +12,7 @@ export default function Footer() {
                 <ShoppingBasket className="h-6 w-6" />
               </div>
               <span className="font-display font-bold text-2xl tracking-tight text-primary">
-                FreshCart
+                Aaharaam
               </span>
             </Link>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -50,7 +50,7 @@ export default function Footer() {
         
         <div className="border-t mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            &copy; {new Date().getFullYear()} FreshCart Grocery. All rights reserved.
+            &copy; {new Date().getFullYear()} Aaharaam Grocery. All rights reserved.
           </p>
           <div className="flex gap-4 text-sm text-muted-foreground">
             <button className="hover:text-primary transition-colors">Terms of Service</button>

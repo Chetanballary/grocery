@@ -7,11 +7,9 @@ import {
   Sprout,
   LogIn,
   LogOut,
-  User as UserIcon,
   LayoutDashboard,
 } from "lucide-react";
 import { useState } from "react";
-import { Show, useUser, useClerk } from "@clerk/react";
 import {
   useGetCart,
   useListCategories,
@@ -44,7 +42,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { setIntendedRole } from "@/lib/auth";
+import {
+  basePath,
+  clearMockUserId,
+  getMockUserId,
+  setIntendedRole,
+} from "@/lib/auth";
+import { useClerk, useUser } from "@clerk/react";
 
 export default function Header() {
   const [, setLocation] = useLocation();
@@ -53,9 +57,12 @@ export default function Header() {
   const { data: categories } = useListCategories();
   const { isLoaded, isSignedIn, user } = useUser();
   const { signOut } = useClerk();
+  const mockUserId = getMockUserId();
+  const clerkSignedIn = isLoaded && isSignedIn === true;
+  const isAuthenticated = clerkSignedIn || !!mockUserId;
   const { data: me } = useGetMe({
     query: {
-      enabled: isLoaded && isSignedIn === true,
+      enabled: isAuthenticated,
       queryKey: getGetMeQueryKey(),
     },
   });
@@ -69,10 +76,21 @@ export default function Header() {
   };
 
   const itemCount = cart?.itemCount || 0;
-  const initial =
-    user?.firstName?.[0]?.toUpperCase() ??
-    user?.primaryEmailAddress?.emailAddress?.[0]?.toUpperCase() ??
-    "U";
+  const clerkDisplayName =
+    user?.fullName ||
+    user?.firstName ||
+    user?.primaryEmailAddress?.emailAddress ||
+    "Account";
+  const displayName =
+    me?.sellerName ||
+    me?.displayName ||
+    (clerkSignedIn ? clerkDisplayName : mockUserId ? "Guest Buyer" : "Guest");
+  const initial = displayName[0]?.toUpperCase() ?? "U";
+  const authLabel = clerkSignedIn
+    ? me?.role === "seller"
+      ? "Seller account"
+      : "Buyer account"
+    : "Guest session";
 
   function startSellerSignup() {
     setIntendedRole("seller");
@@ -93,7 +111,7 @@ export default function Header() {
           <SheetContent side="left" className="w-[300px] sm:w-[400px]">
             <SheetHeader>
               <SheetTitle className="text-left font-display text-primary text-xl">
-                FreshCart
+                Aaharaam
               </SheetTitle>
             </SheetHeader>
             <div className="py-6 flex flex-col gap-4">
@@ -103,25 +121,37 @@ export default function Header() {
               <Link href="/products" className="text-lg font-medium">
                 All Products
               </Link>
-              <Show when="signed-in">
-                {me?.role === "seller" && (
-                  <Link href="/seller" className="text-lg font-medium text-secondary">
-                    Seller dashboard
+              {isAuthenticated && (
+                <>
+                  {me?.role === "seller" && (
+                    <Link href="/seller" className="text-lg font-medium text-secondary">
+                      Seller dashboard
+                    </Link>
+                  )}
+                  <Link href="/orders" className="text-lg font-medium">
+                    My orders
                   </Link>
-                )}
-                <Link href="/orders" className="text-lg font-medium">
-                  My orders
-                </Link>
-              </Show>
-              <Show when="signed-out">
+                  {!clerkSignedIn && (
+                    <Link href="/sign-in" className="text-lg font-medium text-primary">
+                      Sign in or create account
+                    </Link>
+                  )}
+                </>
+              )}
+              {!isAuthenticated && (
                 <button
                   type="button"
                   onClick={startSellerSignup}
                   className="text-lg font-medium text-left text-secondary"
                 >
-                  Sell on FreshCart
+                  Sell on Aaharaam
                 </button>
-              </Show>
+              )}
+              {isAuthenticated && !clerkSignedIn && (
+                <Link href="/sign-in" className="text-lg font-medium text-primary">
+                  Sign in or create account
+                </Link>
+              )}
               <div className="h-px bg-border my-2" />
               <h3 className="font-semibold text-muted-foreground uppercase tracking-wider text-sm">
                 Categories
@@ -147,7 +177,7 @@ export default function Header() {
             <ShoppingBasket className="h-6 w-6" />
           </div>
           <span className="hidden md:inline-block font-display font-bold text-xl tracking-tight text-primary">
-            FreshCart
+            Aaharaam
           </span>
         </Link>
 
@@ -194,7 +224,7 @@ export default function Header() {
                   data-testid="link-sell-on-freshcart"
                 >
                   <Sprout className="h-4 w-4 mr-1.5" />
-                  Sell on FreshCart
+                  Sell on Aaharaam
                 </button>
               </NavigationMenuItem>
             </NavigationMenuList>
@@ -218,7 +248,7 @@ export default function Header() {
           </form>
 
           <nav className="flex items-center gap-1">
-            <Show when="signed-in">
+            {isAuthenticated && (
               <Link href="/orders">
                 <Button
                   variant="ghost"
@@ -229,7 +259,7 @@ export default function Header() {
                   <span className="sr-only">Orders</span>
                 </Button>
               </Link>
-            </Show>
+            )}
 
             <Link href="/cart">
               <Button
@@ -248,7 +278,7 @@ export default function Header() {
               </Button>
             </Link>
 
-            <Show when="signed-out">
+            {!isAuthenticated && (
               <Link href="/sign-in">
                 <Button
                   variant="outline"
@@ -260,9 +290,9 @@ export default function Header() {
                   <span className="hidden sm:inline">Sign in</span>
                 </Button>
               </Link>
-            </Show>
+            )}
 
-            <Show when="signed-in">
+            {isAuthenticated && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -277,20 +307,17 @@ export default function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="font-medium">
-                      {me?.sellerName ||
-                        me?.displayName ||
-                        user?.firstName ||
-                        "Hello"}
-                    </div>
-                    <div className="text-xs text-muted-foreground font-normal">
-                      {me?.role === "seller" ? "Seller account" : "Buyer account"}
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {me?.role === "seller" && (
-                    <DropdownMenuItem asChild>
+                <DropdownMenuLabel>
+                  <div className="font-medium">
+                      {displayName}
+                  </div>
+                  <div className="text-xs text-muted-foreground font-normal">
+                      {authLabel}
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {me?.role === "seller" && (
+                  <DropdownMenuItem asChild>
                       <Link href="/seller">
                         <LayoutDashboard className="h-4 w-4 mr-2" />
                         Seller dashboard
@@ -311,9 +338,26 @@ export default function Header() {
                       </Link>
                     </DropdownMenuItem>
                   )}
+                  {!clerkSignedIn && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/sign-in">
+                        <LogIn className="h-4 w-4 mr-2" />
+                        Sign in or create account
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => signOut({ redirectUrl: window.location.origin + (import.meta.env.BASE_URL || "/") })}
+                    onClick={async () => {
+                      clearMockUserId();
+                      if (clerkSignedIn) {
+                        await signOut({
+                          redirectUrl: window.location.origin + (basePath || "/"),
+                        });
+                        return;
+                      }
+                      window.location.assign(basePath || "/");
+                    }}
                     data-testid="button-signout"
                   >
                     <LogOut className="h-4 w-4 mr-2" />
@@ -321,7 +365,7 @@ export default function Header() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </Show>
+            )}
           </nav>
         </div>
       </div>

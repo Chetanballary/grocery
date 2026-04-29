@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useLocation, Link } from "wouter";
-import { Show, useUser } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@clerk/react";
 import {
   Plus,
   Pencil,
@@ -11,6 +11,7 @@ import {
   Sprout,
   IndianRupee,
 } from "lucide-react";
+import { getMockUserId } from "@/lib/auth";
 import {
   useGetMe,
   useListCategories,
@@ -71,12 +72,16 @@ const emptyForm: FormState = {
 
 export default function SellerDashboardPage() {
   const [, setLocation] = useLocation();
-  const { isLoaded, isSignedIn } = useUser();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const mockUserId = getMockUserId();
+  const clerkUserId = isLoaded && isSignedIn ? userId : null;
+  const isAuthenticated = !!clerkUserId || !!mockUserId;
+  
   const { data: me, isLoading: meLoading } = useGetMe({
     query: {
-      enabled: isLoaded && isSignedIn === true,
+      enabled: isAuthenticated,
       queryKey: getGetMeQueryKey(),
     },
   });
@@ -97,12 +102,11 @@ export default function SellerDashboardPage() {
   const [confirmDelete, setConfirmDelete] = useState<Product | null>(null);
 
   useEffect(() => {
-    if (!isLoaded) return;
-    if (!isSignedIn) {
+    if (!isAuthenticated) {
       setLocation("/sign-in");
       return;
     }
-  }, [isLoaded, isSignedIn, setLocation]);
+  }, [isAuthenticated, setLocation]);
 
   useEffect(() => {
     if (me && me.role !== "seller") {
@@ -226,8 +230,7 @@ export default function SellerDashboardPage() {
   }
 
   return (
-    <Show when="signed-in">
-      <Layout>
+    <Layout>
         <div className="container max-w-7xl mx-auto px-4 md:px-6 py-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-10">
             <div>
@@ -239,7 +242,7 @@ export default function SellerDashboardPage() {
                 {me.sellerName || me.displayName || "Your shop"}
               </h1>
               <p className="text-stone-600 mt-1">
-                Manage the products you're selling on FreshCart.
+                Manage the products you're selling on Aaharaam.
               </p>
             </div>
             <div className="flex gap-2">
@@ -535,6 +538,5 @@ export default function SellerDashboardPage() {
           </DialogContent>
         </Dialog>
       </Layout>
-    </Show>
-  );
+    );
 }

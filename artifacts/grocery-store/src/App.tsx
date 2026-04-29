@@ -5,7 +5,7 @@ import {
   QueryClientProvider,
   useQueryClient,
 } from "@tanstack/react-query";
-import { ClerkProvider, useClerk } from "@clerk/react";
+import { ClerkProvider, useAuth } from "@clerk/react";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -24,10 +24,14 @@ import SignUpPage from "@/pages/SignUp";
 import OnboardingPage from "@/pages/Onboarding";
 import SellerDashboardPage from "@/pages/SellerDashboard";
 import SellerProfilePage from "@/pages/SellerProfile";
-import { basePath, clerkAppearance, stripBase } from "@/lib/auth";
+import {
+  basePath,
+  clerkAppearance,
+  stripBase,
+} from "@/lib/auth";
+import { setAuthTokenGetter } from "@workspace/api-client-react";
 
 const clerkPubKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-const clerkProxyUrl = import.meta.env.VITE_CLERK_PROXY_URL;
 
 if (!clerkPubKey) {
   throw new Error("Missing VITE_CLERK_PUBLISHABLE_KEY in .env file");
@@ -41,28 +45,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-function ClerkQueryClientCacheInvalidator() {
-  const { addListener } = useClerk();
-  const queryClient = useQueryClient();
-  const prevUserIdRef = useRef<string | null | undefined>(undefined);
-
-  useEffect(() => {
-    const unsubscribe = addListener(({ user }) => {
-      const userId = user?.id ?? null;
-      if (
-        prevUserIdRef.current !== undefined &&
-        prevUserIdRef.current !== userId
-      ) {
-        queryClient.clear();
-      }
-      prevUserIdRef.current = userId;
-    });
-    return unsubscribe;
-  }, [addListener, queryClient]);
-
-  return null;
-}
 
 function Router() {
   return (
@@ -86,34 +68,43 @@ function Router() {
   );
 }
 
+function ClerkBridge() {
+  const { userId, getToken } = useAuth();
+  const queryClient = useQueryClient();
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    setAuthTokenGetter(() => getToken());
+    return () => setAuthTokenGetter(null);
+  }, [getToken]);
+
+  useEffect(() => {
+    if (
+      prevUserIdRef.current !== undefined &&
+      prevUserIdRef.current !== (userId ?? null)
+    ) {
+      queryClient.clear();
+    }
+    prevUserIdRef.current = userId ?? null;
+  }, [queryClient, userId]);
+
+  return null;
+}
+
 function ClerkProviderWithRoutes() {
   const [, setLocation] = useLocation();
+
   return (
     <ClerkProvider
       publishableKey={clerkPubKey}
-      proxyUrl={clerkProxyUrl}
       appearance={clerkAppearance}
       signInUrl={`${basePath}/sign-in`}
       signUpUrl={`${basePath}/sign-up`}
-      localization={{
-        signIn: {
-          start: {
-            title: "Welcome back to FreshCart",
-            subtitle: "Sign in to shop or manage your shop",
-          },
-        },
-        signUp: {
-          start: {
-            title: "Join FreshCart",
-            subtitle: "Create an account to buy or sell fresh groceries",
-          },
-        },
-      }}
       routerPush={(to) => setLocation(stripBase(to))}
       routerReplace={(to) => setLocation(stripBase(to), { replace: true })}
     >
       <QueryClientProvider client={queryClient}>
-        <ClerkQueryClientCacheInvalidator />
+        <ClerkBridge />
         <TooltipProvider>
           <Router />
           <Toaster />
